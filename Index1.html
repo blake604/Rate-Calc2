@@ -1,1 +1,501 @@
 
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Premium Rate Lookup</title>
+<style>
+  :root {
+    --navy: #14213d;
+    --navy-deep: #0b1526;
+    --ledger: #f6f3eb;
+    --paper: #fffdf8;
+    --gold: #b78a3d;
+    --ink: #1c1c1c;
+    --ink-soft: #5a5a52;
+    --line: #d9d3c1;
+    --good: #2f5d3a;
+    --err: #a3372c;
+  }
+
+  * { box-sizing: border-box; }
+
+  body {
+    margin: 0;
+    background: var(--ledger);
+    color: var(--ink);
+    font-family: 'Georgia', 'Iowan Old Style', serif;
+    min-height: 100vh;
+    display: flex;
+    align-items: flex-start;
+    justify-content: center;
+    padding: 48px 20px;
+  }
+
+  .sheet {
+    width: 100%;
+    max-width: 560px;
+    background: var(--paper);
+    border: 1px solid var(--line);
+    box-shadow: 0 1px 3px rgba(20,33,61,0.08), 0 12px 32px rgba(20,33,61,0.10);
+  }
+
+  .letterhead {
+    background: var(--navy);
+    background-image: linear-gradient(160deg, var(--navy) 0%, var(--navy-deep) 100%);
+    color: var(--ledger);
+    padding: 28px 32px 24px;
+    border-bottom: 3px solid var(--gold);
+  }
+
+  .letterhead .eyebrow {
+    font-family: 'Helvetica Neue', Arial, sans-serif;
+    font-size: 11px;
+    letter-spacing: 0.18em;
+    text-transform: uppercase;
+    color: var(--gold);
+    margin: 0 0 6px;
+  }
+
+  .letterhead h1 {
+    margin: 0;
+    font-size: 26px;
+    font-weight: 400;
+    letter-spacing: 0.01em;
+  }
+
+  .letterhead p {
+    font-family: 'Helvetica Neue', Arial, sans-serif;
+    font-size: 12.5px;
+    color: #c9d0dd;
+    margin: 8px 0 0;
+    line-height: 1.5;
+  }
+
+  .body { padding: 32px; }
+
+  .field { margin-bottom: 22px; }
+
+  .field label {
+    display: block;
+    font-family: 'Helvetica Neue', Arial, sans-serif;
+    font-size: 11px;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    color: var(--ink-soft);
+    margin-bottom: 8px;
+  }
+
+  input[type="number"], input[type="text"], input[type="email"], input[type="tel"] {
+    width: 100%;
+    padding: 12px 14px;
+    font-family: 'Helvetica Neue', Arial, sans-serif;
+    font-size: 16px;
+    border: 1px solid var(--line);
+    background: var(--ledger);
+    color: var(--ink);
+    border-radius: 2px;
+  }
+
+  input:focus {
+    outline: none;
+    border-color: var(--gold);
+    box-shadow: 0 0 0 3px rgba(183,138,61,0.18);
+  }
+
+  .row-2 {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 16px;
+  }
+
+  .toggle {
+    display: flex;
+    gap: 10px;
+  }
+
+  .toggle button {
+    flex: 1;
+    padding: 12px 10px;
+    font-family: 'Helvetica Neue', Arial, sans-serif;
+    font-size: 13.5px;
+    letter-spacing: 0.03em;
+    border: 1px solid var(--line);
+    background: var(--ledger);
+    color: var(--ink);
+    cursor: pointer;
+    border-radius: 2px;
+    transition: background 0.15s ease, border-color 0.15s ease, color 0.15s ease;
+  }
+
+  .toggle button:focus-visible {
+    outline: 2px solid var(--gold);
+    outline-offset: 2px;
+  }
+
+  .toggle button.active {
+    background: var(--navy);
+    border-color: var(--navy);
+    color: var(--ledger);
+  }
+
+  .family-check {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    font-family: 'Helvetica Neue', Arial, sans-serif;
+    font-size: 14px;
+    cursor: pointer;
+    user-select: none;
+  }
+
+  .family-check input {
+    width: 18px;
+    height: 18px;
+    accent-color: var(--navy);
+    cursor: pointer;
+  }
+
+  .family-panel {
+    max-height: 0;
+    overflow: hidden;
+    transition: max-height 0.3s ease;
+  }
+
+  .family-panel.open {
+    max-height: 500px;
+    margin-top: 18px;
+  }
+
+  .family-panel-inner {
+    border-left: 2px solid var(--gold);
+    padding-left: 18px;
+  }
+
+  .result {
+    margin-top: 8px;
+    border-top: 1px dashed var(--line);
+    padding-top: 24px;
+  }
+
+  .result-row {
+    display: flex;
+    justify-content: space-between;
+    align-items: baseline;
+    font-family: 'Helvetica Neue', Arial, sans-serif;
+  }
+
+  .result-row .label {
+    font-size: 12px;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    color: var(--ink-soft);
+  }
+
+  .result-row .amount {
+    font-family: 'Georgia', serif;
+    font-size: 34px;
+    color: var(--good);
+  }
+
+  .result-row .amount.empty {
+    color: var(--ink-soft);
+    font-size: 18px;
+    font-style: italic;
+  }
+
+  .result-note {
+    font-family: 'Helvetica Neue', Arial, sans-serif;
+    font-size: 11.5px;
+    color: var(--ink-soft);
+    margin-top: 10px;
+    line-height: 1.5;
+  }
+
+  .submit-btn {
+    width: 100%;
+    margin-top: 26px;
+    padding: 14px;
+    background: var(--navy);
+    color: var(--ledger);
+    border: none;
+    font-family: 'Helvetica Neue', Arial, sans-serif;
+    font-size: 13.5px;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    cursor: pointer;
+    border-radius: 2px;
+  }
+
+  .submit-btn:hover { background: var(--navy-deep); }
+  .submit-btn:disabled { opacity: 0.6; cursor: not-allowed; }
+
+  .status-msg {
+    margin-top: 14px;
+    font-family: 'Helvetica Neue', Arial, sans-serif;
+    font-size: 12.5px;
+    text-align: center;
+  }
+
+  .status-msg.success { color: var(--good); }
+  .status-msg.error { color: var(--err); }
+
+  .footer {
+    padding: 16px 32px 24px;
+    font-family: 'Helvetica Neue', Arial, sans-serif;
+    font-size: 10.5px;
+    color: var(--ink-soft);
+    letter-spacing: 0.02em;
+    border-top: 1px solid var(--line);
+  }
+</style>
+</head>
+<body>
+
+<div class="sheet">
+  <div class="letterhead">
+    <p class="eyebrow">Premium Schedule</p>
+    <h1>Private Health Quoter</h1>
+    <p>Find your estimated monthly premium! Ages 18&ndash;64.</p>
+  </div>
+
+  <div class="body">
+    <div class="field">
+      <label for="ageInput">Client Age</label>
+      <input type="number" id="ageInput" min="18" max="64" placeholder="e.g. 42">
+    </div>
+
+    <div class="field">
+      <label>Sex</label>
+      <div class="toggle">
+        <button type="button" id="btnM" onclick="setGender('M')">Male</button>
+        <button type="button" id="btnF" onclick="setGender('F')">Female</button>
+      </div>
+    </div>
+
+    <div class="field">
+      <label>Smoker</label>
+      <div class="toggle">
+        <button type="button" id="btnSmokerYes" onclick="setSmoker(true)">Yes</button>
+        <button type="button" id="btnSmokerNo" onclick="setSmoker(false)">No</button>
+      </div>
+    </div>
+
+    <div class="field">
+      <label for="zipInput">Zip Code</label>
+      <input type="text" id="zipInput" maxlength="10" placeholder="e.g. 34981" oninput="compute()">
+    </div>
+
+    <div class="field">
+      <label class="family-check">
+        <input type="checkbox" id="familyCheck" onchange="toggleFamily()">
+        additional info for enrollment
+      </label>
+
+      <div class="family-panel" id="familyPanel">
+        <div class="family-panel-inner">
+          <div class="field">
+            <label for="famName">Full Name</label>
+            <input type="text" id="famName" placeholder="Your Name">
+          </div>
+          <div class="row-2">
+            <div class="field">
+              <label for="famPhone">Phone Number</label>
+              <input type="tel" id="famPhone" placeholder="(561) 000-0000">
+            </div>
+            <div class="field">
+              <label for="famEmail">Email</label>
+              <input type="email" id="famEmail" placeholder="name@email.com">
+            </div>
+          </div>
+          <div class="field">
+            <label for="famTime">Best Time to Contact</label>
+            <input type="text" id="famTime" placeholder="e.g. Weekday mornings">
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="result">
+      <div class="result-row">
+        <span class="label">Monthly Premium</span>
+        <span class="amount empty" id="amountDisplay">Enter age &amp; sex</span>
+      </div>
+      <p class="result-note" id="resultNote">Rates subject to change and apply to ages 18 through 64. Outside that range and for families, contact underwriting directly: 561-709-3617.</p>
+    </div>
+
+    <button class="submit-btn" id="submitBtn" onclick="submitEntry()">Submit for enrollment</button>
+    <p class="status-msg" id="statusMsg"></p>
+  </div>
+
+  <div class="footer">
+    Rate table current as of issue date on file &middot; Internal use only
+  </div>
+</div>
+
+<script>
+  // ⚠️ Paste your Google Apps Script Web App URL here (see setup instructions)
+  const SHEET_ENDPOINT_URL = "https://script.google.com/macros/s/AKfycbwuh2UuceeIWeSYeewCaQ2sLs9R_SHCrNrAfvr0n1VUYMwZyvOFjRC1o0oyIGhdJgfWlg/exec";
+
+  const rates = {
+    18: {M:{n:60.28,s:66.31}, F:{n:65.33,s:71.87}},
+    19: {M:{n:60.28,s:66.31}, F:{n:65.33,s:71.87}},
+    20: {M:{n:60.28,s:66.31}, F:{n:65.33,s:71.87}},
+    21: {M:{n:60.28,s:66.31}, F:{n:65.33,s:71.87}},
+    22: {M:{n:60.28,s:66.31}, F:{n:65.33,s:71.87}},
+    23: {M:{n:60.28,s:66.31}, F:{n:65.33,s:71.87}},
+    24: {M:{n:60.28,s:66.31}, F:{n:65.33,s:71.87}},
+    25: {M:{n:60.28,s:66.31}, F:{n:65.33,s:71.87}},
+    26: {M:{n:61.20,s:67.58}, F:{n:66.34,s:73.25}},
+    27: {M:{n:62.12,s:68.85}, F:{n:67.35,s:74.65}},
+    28: {M:{n:63.04,s:70.13}, F:{n:68.36,s:76.03}},
+    29: {M:{n:63.96,s:71.39}, F:{n:69.36,s:77.43}},
+    30: {M:{n:64.88,s:72.67}, F:{n:70.37,s:78.81}},
+    31: {M:{n:66.29,s:74.40}, F:{n:71.92,s:80.72}},
+    32: {M:{n:67.70,s:76.14}, F:{n:73.47,s:82.63}},
+    33: {M:{n:69.11,s:77.88}, F:{n:75.02,s:84.54}},
+    34: {M:{n:70.52,s:79.61}, F:{n:76.58,s:86.45}},
+    35: {M:{n:71.93,s:81.35}, F:{n:78.12,s:88.36}},
+    36: {M:{n:73.34,s:83.09}, F:{n:79.67,s:90.26}},
+    37: {M:{n:74.75,s:84.82}, F:{n:81.23,s:92.17}},
+    38: {M:{n:76.15,s:86.56}, F:{n:82.77,s:94.08}},
+    39: {M:{n:77.56,s:88.30}, F:{n:84.33,s:95.99}},
+    40: {M:{n:78.97,s:90.03}, F:{n:85.88,s:97.89}},
+    41: {M:{n:82.14,s:93.87}, F:{n:88.83,s:101.48}},
+    42: {M:{n:85.32,s:97.71}, F:{n:91.77,s:105.08}},
+    43: {M:{n:88.49,s:101.55}, F:{n:94.72,s:108.66}},
+    44: {M:{n:91.97,s:105.39}, F:{n:97.66,s:112.25}},
+    45: {M:{n:94.84,s:109.23}, F:{n:100.61,s:115.85}},
+    46: {M:{n:98.01,s:113.07}, F:{n:103.56,s:119.43}},
+    47: {M:{n:101.19,s:116.91}, F:{n:106.50,s:123.02}},
+    48: {M:{n:104.36,s:120.75}, F:{n:109.45,s:126.61}},
+    49: {M:{n:107.54,s:124.58}, F:{n:112.39,s:130.20}},
+    50: {M:{n:110.71,s:128.43}, F:{n:115.34,s:133.79}},
+    51: {M:{n:115.88,s:134.74}, F:{n:119.30,s:138.69}},
+    52: {M:{n:121.04,s:141.06}, F:{n:123.25,s:143.59}},
+    53: {M:{n:126.21,s:147.37}, F:{n:127.21,s:148.50}},
+    54: {M:{n:131.38,s:153.69}, F:{n:131.16,s:153.69}},
+    55: {M:{n:136.54,s:160.01}, F:{n:135.12,s:158.30}},
+    56: {M:{n:141.70,s:166.33}, F:{n:139.09,s:163.20}},
+    57: {M:{n:146.87,s:172.64}, F:{n:143.04,s:168.10}},
+    58: {M:{n:152.04,s:178.96}, F:{n:147.00,s:173.00}},
+    59: {M:{n:157.20,s:185.27}, F:{n:150.95,s:177.90}},
+    60: {M:{n:162.37,s:191.59}, F:{n:154.91,s:182.80}},
+    61: {M:{n:167.54,s:197.91}, F:{n:158.87,s:187.81}},
+    62: {M:{n:172.70,s:204.22}, F:{n:162.83,s:192.61}},
+    63: {M:{n:177.87,s:210.54}, F:{n:166.80,s:197.51}},
+    64: {M:{n:183.04,s:216.85}, F:{n:170.76,s:202.42}}
+  };
+
+  let selectedGender = null;
+  let selectedSmoker = null;
+  let currentRate = null;
+
+  function setGender(g) {
+    selectedGender = g;
+    document.getElementById('btnM').classList.toggle('active', g === 'M');
+    document.getElementById('btnF').classList.toggle('active', g === 'F');
+    compute();
+  }
+
+  function setSmoker(isSmoker) {
+    selectedSmoker = isSmoker;
+    document.getElementById('btnSmokerYes').classList.toggle('active', isSmoker === true);
+    document.getElementById('btnSmokerNo').classList.toggle('active', isSmoker === false);
+    compute();
+  }
+
+  function toggleFamily() {
+    const checked = document.getElementById('familyCheck').checked;
+    document.getElementById('familyPanel').classList.toggle('open', checked);
+  }
+
+  function compute() {
+    const ageInput = document.getElementById('ageInput').value;
+    const amountEl = document.getElementById('amountDisplay');
+    const noteEl = document.getElementById('resultNote');
+    const age = parseInt(ageInput, 10);
+
+    if (!ageInput || !selectedGender || selectedSmoker === null) {
+      amountEl.textContent = 'Enter age, sex & smoker status';
+      amountEl.classList.add('empty');
+      currentRate = null;
+      noteEl.textContent = 'Rates apply to ages 18 through 64. Outside that range, contact underwriting directly.';
+      return;
+    }
+
+    if (isNaN(age) || age < 18 || age > 64) {
+      amountEl.textContent = 'Out of range';
+      amountEl.classList.add('empty');
+      currentRate = null;
+      noteEl.textContent = 'This schedule only covers ages 18 through 64. Contact underwriting for other ages.';
+      return;
+    }
+
+    const rate = selectedSmoker ? rates[age][selectedGender].s : rates[age][selectedGender].n;
+    currentRate = rate;
+    amountEl.textContent = '$' + rate.toFixed(2);
+    amountEl.classList.remove('empty');
+    noteEl.textContent = 'Based on age ' + age + ', ' + (selectedGender === 'M' ? 'male' : 'female') + ', ' + (selectedSmoker ? 'smoker' : 'non-smoker') + '.';
+  }
+
+  document.getElementById('ageInput').addEventListener('input', compute);
+
+  async function submitEntry() {
+    const statusEl = document.getElementById('statusMsg');
+    const btn = document.getElementById('submitBtn');
+    const age = document.getElementById('ageInput').value;
+    const zip = document.getElementById('zipInput').value;
+    const familyIncluded = document.getElementById('familyCheck').checked;
+
+    if (!age || !selectedGender || selectedSmoker === null || !zip) {
+      statusEl.textContent = 'Please complete age, sex, smoker status, and zip code before saving.';
+      statusEl.className = 'status-msg error';
+      return;
+    }
+
+    if (SHEET_ENDPOINT_URL.includes('PASTE_YOUR')) {
+      statusEl.textContent = 'This form isn\'t connected to a Google Sheet yet. See setup instructions.';
+      statusEl.className = 'status-msg error';
+      return;
+    }
+
+    const payload = {
+      timestamp: new Date().toISOString(),
+      age: age,
+      sex: selectedGender,
+      smoker: selectedSmoker ? 'Yes' : 'No',
+      zip: zip,
+      monthlyPremium: currentRate,
+      familyIncluded: familyIncluded ? 'Yes' : 'No',
+      familyName: familyIncluded ? document.getElementById('famName').value : '',
+      familyPhone: familyIncluded ? document.getElementById('famPhone').value : '',
+      familyEmail: familyIncluded ? document.getElementById('famEmail').value : '',
+      familyBestTime: familyIncluded ? document.getElementById('famTime').value : ''
+    };
+
+    btn.disabled = true;
+    statusEl.textContent = 'Saving...';
+    statusEl.className = 'status-msg';
+
+    try {
+      await fetch(SHEET_ENDPOINT_URL, {
+        method: 'POST',
+        mode: 'no-cors',
+        headers: { 'Content-Type': 'text/plain' },
+        body: JSON.stringify(payload)
+      });
+      statusEl.textContent = 'Saved. Record added to the client sheet.';
+      statusEl.className = 'status-msg success';
+    } catch (err) {
+      statusEl.textContent = 'Could not save. Check your connection and try again.';
+      statusEl.className = 'status-msg error';
+    } finally {
+      btn.disabled = false;
+    }
+  }
+</script>
+
+</body>
+</html>
